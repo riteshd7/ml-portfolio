@@ -1,0 +1,1 @@
+Create day1_python_basics.ipynb and complete these tasks on your notebook.
