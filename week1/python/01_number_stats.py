@@ -61,44 +61,113 @@ import math
 
 def count(nums):
     # TODO: return number of elements; raise ValueError if empty
-    pass
+    
+    i = 0                           #ALTLOGIC
+    for element in nums: 
+        i += 1
+    
+    length = len(nums)              #LOGIC
+
+    if length > 0:
+        return length
+    else:
+        return ValueError
 
 
 def total(nums):
     # TODO
-    pass
 
+    sum = 0                          #LOGIC 
+    for element in nums:
+        sum += element 
+    
+    if count(nums) == ValueError:
+        return ValueError
+    else: 
+        return sum
+    
+ 
 
 def mean(nums):
     # TODO
-    pass
+    
+    average = total(nums) / count(nums)   #LOGIC 
+    
+    if count(nums) == ValueError:
+        return ValueError
+    else: 
+        return average 
+    
+    
 
 
 def median(nums):
     # TODO: handle odd vs even length
-    pass
-
+    
+    arranged = sorted(nums)
+    if count(nums) % 2 == 0:
+        i = count(nums) / 2
+        j = (count(nums) / 2) + 1 
+        median = (arranged[i]+arranged[j]) / 2
+    else: 
+        k = (count(nums) + 1) / 2
+        median = (arranged[k]) 
+    
+    if count(nums) == ValueError:
+        return ValueError
+    else: 
+        return median
 
 def mode(nums):
     # TODO: return list of all values with max frequency, sorted ascending
-    pass
-
+    #nums_counter = Counter(nums)
+    #for x,y in nums_counter.items():
+    if count(nums) == ValueError:
+        return ValueError
+    else: 
+        return 0
 
 def variance(nums):
     # TODO: population variance = mean of (x - mean)^2
-    pass
+    diff_list = []
+    for element in nums:
+        diff = element - mean(nums)
+        diff_square = diff ** 2
+        diff_list.append(diff_square)
+    square_mean = mean(diff_list)
+
+    if count(nums) == ValueError:
+        return ValueError
+    else: 
+        return square_mean
 
 
 def stddev(nums):
     # TODO: sqrt of variance
-    pass
+    std = math.sqrt(variance(nums))
 
+    if count(nums) == ValueError:
+        return ValueError
+    else: 
+        return std
 
 def summary(nums):
     # TODO: return dict with keys: count, sum, mean, median, mode, var, stddev
-    pass
+    
+    summary_dict = {}
+    summary_dict.update({"count": count(nums)})
+    summary_dict.update({"sum": sum(nums)})
+    summary_dict.update({"mean": mean(nums)})
+    summary_dict.update({"median": median(nums)})
+    summary_dict.update({"mode": mode(nums)})
+    summary_dict.update({"var": variance(nums)})
+    summary_dict.update({"stddev": stddev(nums)})  
 
-
+    if count(nums) == ValueError:
+        return ValueError
+    else: 
+        return summary_dict       
+                                            
 # ---------------------------------------------------------------------------
 # Tests — DO NOT MODIFY. Run this file directly: `python 01_number_stats.py`
 # Every assertion must pass.
