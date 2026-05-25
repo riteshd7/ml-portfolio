@@ -1,0 +1,3 @@
+The quick brown fox jumps over the lazy dog.
+The dog barks. The fox is quick. The lazy dog sleeps.
+A brown fox and a quick fox are not the same fox.
