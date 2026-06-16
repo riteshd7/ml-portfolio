@@ -28,7 +28,7 @@ The "inventory" is a dict mapping `sku` (str) to an item dict:
         "SKU001": {"name": "Notebook",  "qty": 50, "price": 80.0},
         "SKU002": {"name": "Pen",       "qty": 200, "price": 10.0},
         ...
-    }
+    }      
 
 Specification
 -------------
@@ -91,38 +91,69 @@ Forbidden today
 
 
 def add_item(inv, sku, name, qty, price):
-    # TODO
-    pass
-
+    if sku not in inv:
+        if qty < 0 or price < 0:
+            raise ValueError
+        else:
+            inv[sku] = {"name": name , "qty": qty , "price" : price }
+            return inv 
+    raise KeyError(f"sku already exists:{sku}")
 
 def remove_item(inv, sku):
-    # TODO
-    pass
-
+    if sku in inv:
+        del inv[sku]
+        return inv          
+    raise KeyError(f"sku not found:{sku}")
 
 def update_qty(inv, sku, delta):
-    # TODO
-    pass
+    if sku in inv:
+        new_qty = inv[sku]["qty"] + delta 
+        if new_qty < 0:
+            raise ValueError("insufficient stock")
+        inv[sku]["qty"] = new_qty
+        return inv 
+    raise KeyError     
 
 
 def find_item(inv, query):
-    # TODO
-    pass
+    
+    #for item_name in inv[sku]["name"]:
+    #    if query.lower() in inv[sku]["name"].lower():
+            
+    results = []
+    for sku, item in inv.items():
+        if query.lower() in item["name"].lower():
+            results.append({"sku": sku, **item})
+    return results 
 
 
 def low_stock(inv, threshold=10):
-    # TODO
-    pass
+    results = []
+    for sku, item in inv.items():
+        if item["qty"] <= threshold:
+            results.append({"sku": sku, **item})
+    return sorted(results, key = lambda x:x["qty"])
 
 
 def total_value(inv):
-    # TODO
-    pass
+    total = 0.0
+    for item in inv.values():
+        total += item["qty"] * item["price"]
+    return total
 
 
 def summary(inv):
-    # TODO
-    pass
+    
+    return {
+        "total_skus" : len(inv),
+        "total_units" : sum(item["qty"] for item in inv.values()),
+        "total_value" : total_value(inv),
+        "low_stock" : low_stock(inv, threshold = 10)
+    }
+
+
+
+    
 
 
 # ---------------------------------------------------------------------------

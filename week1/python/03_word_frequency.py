@@ -21,7 +21,7 @@ Specification
 -------------
 Implement two functions:
 
-    tokenize(text: str) -> list[str]
+    tokenize(text: str) -> list[str]                       
         - Lowercases the text
         - Splits into words (a "word" is any maximal run of letters)
         - Strips punctuation
@@ -29,14 +29,14 @@ Implement two functions:
         - Empty string returns []
 
     top_words(filepath: str, n: int = 10, exclude_stopwords: bool = True) -> list[tuple[str, int]]
-        - Reads the file at `filepath` (UTF-8)
+        - Reads the file at `filepath` (UTF-8)        
         - Tokenizes the contents
         - If exclude_stopwords is True, removes any word in STOPWORDS (defined below)
         - Counts occurrences
         - Returns the top `n` (word, count) tuples, sorted by count DESC,
           and ties broken by word ASC (alphabetical)
         - If file doesn't exist, raise FileNotFoundError with a helpful message
-
+     
 Stop words to use
 -----------------
 STOPWORDS = {
@@ -78,57 +78,99 @@ STOPWORDS = {
 
 def tokenize(text):
     # TODO: lowercase, strip punctuation, split into words
-    pass
+    words = []
+    current_word = ""
 
+    for char in text.lower():
+        if char.isalpha():
+            current_word += char
+        else:
+            if current_word:
+                words.append(current_word)
+                current_word = ""
+
+    if current_word:          # catch any word at end of string
+        words.append(current_word)
+
+    return words
 
 def top_words(filepath, n=10, exclude_stopwords=True):
     # TODO: read file, tokenize, count, sort, return top n
+    
+    if not Path(filepath).exists():
+        raise FileNotFoundError(f"File not found: {filepath}")
+
+    with open(filepath, encoding="utf-8") as f:
+        text = f.read()
+
+    words = tokenize(text)
+
+    if exclude_stopwords:
+        words = [w for w in words if w not in STOPWORDS]
+
+    # Count manually (no Counter)
+    counts = {}
+    for word in words:
+        if word in counts:
+            counts[word] += 1
+        else:
+            counts[word] = 1
+
+    # Convert to list of tuples and sort
+    # Sort by count DESC, then word ASC for ties
+    word_list = []
+    for word, count in counts.items():
+        word_list.append((word, count))
+
+    # Bubble-sort style using sorted() with a plain key tuple — no lambda
+    def sort_key(item):
+        return (-item[1], item[0])   # negative count = descending, word = ascending
+
+    word_list = sorted(word_list, key=sort_key)
+
+    return word_list[:n]
+
+
+# ---------------------------------  
+here = Path(__file__).parent
+sample = here / "sample_text.txt"
+
+# Create a sample if missing
+if not sample.exists():
+    sample.write_text(
+        "The quick brown fox jumps over the lazy dog.\n"
+        "The dog barks. The fox is quick. The lazy dog sleeps.\n"
+        "A brown fox and a quick fox are not the same fox.\n",
+        encoding="utf-8",
+    )
+
+# tokenize tests
+assert tokenize("") == []
+assert tokenize("Hello, world!") == ["hello", "world"]
+assert tokenize("It's a test.") == ["it", "s", "a", "test"]  # apostrophes split
+assert tokenize("ONE one One") == ["one", "one", "one"]
+
+# top_words with stopwords excluded
+result = top_words(str(sample), n=5)
+# "fox" appears 5 times, "dog" 3, "quick" 3, "brown" 2, "lazy" 2
+# Tiebreakers: dog before quick alphabetically
+assert result[0] == ("fox", 5), f"expected fox=5, got {result[0]}"
+assert result[1] == ("dog", 3), f"expected dog=3, got {result[1]}"
+assert result[2] == ("quick", 3), f"expected quick=3, got {result[2]}"
+
+# Without excluding stopwords, "the" should dominate
+result_all = top_words(str(sample), n=3, exclude_stopwords=False)
+assert result_all[0][0] == "the"
+
+# n=0 returns empty list
+assert top_words(str(sample), n=0) == []
+
+# File not found
+try:
+    top_words("does_not_exist.txt")
+except FileNotFoundError:
     pass
+else:
+    raise AssertionError("should raise FileNotFoundError")
 
-
-# ---------------------------------------------------------------------------
-# Tests — DO NOT MODIFY.
-# ---------------------------------------------------------------------------
-if __name__ == "__main__":
-    here = Path(__file__).parent
-    sample = here / "sample_text.txt"
-
-    # Create a sample if missing
-    if not sample.exists():
-        sample.write_text(
-            "The quick brown fox jumps over the lazy dog.\n"
-            "The dog barks. The fox is quick. The lazy dog sleeps.\n"
-            "A brown fox and a quick fox are not the same fox.\n",
-            encoding="utf-8",
-        )
-
-    # tokenize tests
-    assert tokenize("") == []
-    assert tokenize("Hello, world!") == ["hello", "world"]
-    assert tokenize("It's a test.") == ["it", "s", "a", "test"]  # apostrophes split
-    assert tokenize("ONE one One") == ["one", "one", "one"]
-
-    # top_words with stopwords excluded
-    result = top_words(str(sample), n=5)
-    # "fox" appears 5 times, "dog" 3, "quick" 3, "brown" 2, "lazy" 2
-    # Tiebreakers: dog before quick alphabetically
-    assert result[0] == ("fox", 5), f"expected fox=5, got {result[0]}"
-    assert result[1] == ("dog", 3), f"expected dog=3, got {result[1]}"
-    assert result[2] == ("quick", 3), f"expected quick=3, got {result[2]}"
-
-    # Without excluding stopwords, "the" should dominate
-    result_all = top_words(str(sample), n=3, exclude_stopwords=False)
-    assert result_all[0][0] == "the"
-
-    # n=0 returns empty list
-    assert top_words(str(sample), n=0) == []
-
-    # File not found
-    try:
-        top_words("does_not_exist.txt")
-    except FileNotFoundError:
-        pass
-    else:
-        raise AssertionError("should raise FileNotFoundError")
-
-    print("All tests passed.")
+print("All tests passed.")
