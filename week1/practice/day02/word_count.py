@@ -8,7 +8,7 @@ def word_count(filepath : str):
     return count
 """
 """
-def word_count(filepath: str) :
+def word_count(filepath: str) :    #try2
     with open(filepath , "r" , encoding = "utf-8") as file :
         for line in file:
             words = line.split()
@@ -17,12 +17,13 @@ def word_count(filepath: str) :
     return totalwords
 
 """
-def word_count(filepath):
+def word_count(filepath):           #try3 
     with open(filepath, "r" , encoding = "utf-8") as file : 
         totalwords = sum(len(line.split()) for line in file)
     return totalwords
 
 
+##CHECKING AND ASSERTIONS FROM CLAUDE
 
 def check_word_count(text_content: str, expected_count: int):
     """Helper to create a temp file, run the assertion, and clean up."""
