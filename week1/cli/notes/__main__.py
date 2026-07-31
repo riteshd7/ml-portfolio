@@ -1,65 +1,69 @@
-"NOTES CLI"
+"""Notes CLI - a tiny command-line note manager."""
 
-import json 
-from pathlib import Path
-from datetime import date
-import sys
 import argparse
+import json
+import sys
+from datetime import date
+from pathlib import Path
 
+NOTES_FILE = Path.home() / ".notes.json"
 
-NOTES_FILE = Path.home() / ".notes.json"     
 
 class NoteNotFoundError(Exception):
-    pass
+    """Raised when a referenced note id doesn't exist."""
+class EmptyTextError(Exception):
+    """Raised when a text is empty."""  
+
 
 def load_notes():
-    
+    """Read notes from disk. Return [] if file doesn't exist."""
     if not NOTES_FILE.exists():
         return []
-    
-    with open(NOTES_FILE , "r" , encoding = "utf-8") as f:
-        return json.load(f)
+    try:
+        with open(NOTES_FILE, "r") as f:
+            return json.load(f)
+    except json.JSONDecodeError:
+        print(f"Error: {NOTES_FILE} contains corrupt JSON. Fix or remove it and try again.",
+              file=sys.stderr)
+        sys.exit(1)
+
 
 def save_notes(notes):
+    """Write notes to disk."""
+    with open(NOTES_FILE, "w") as f:
+        json.dump(notes, f, indent=2)
 
-    with open(NOTES_FILE , "w" , encoding = "utf-8") as f:
-        json.dump(notes , f)
-    
-    
+
 def next_id(notes):
-    
+    """Return max existing id + 1, or 1 if empty."""
     if not notes:
-        return 1 
-    
-    return max(note["id"] for note in notes) + 1 
+        return 1
+    return max(note["id"] for note in notes) + 1
+
 
 def cmd_add(text):
-
     notes = load_notes()
-    new_id  = next_id(notes)    
-
-    new_note = {
-        "id": new_id,
+    if not text:
+            raise EmptyTextError(f"text is empty)")
+    note = {
+        "id": next_id(notes),
         "text": text,
         "done": False,
-        "created": date.today().isoformat()
+        "created": str(date.today()),
     }
-
-    notes.append(new_note)  
+    notes.append(note)
     save_notes(notes)
-
-    print(f"Added note {new_id} : {text}")
+    print(f"Added note {note['id']}: {note['text']}")
 
 
 def cmd_list():
     notes = load_notes()
     if not notes:
-        print("No notes yet")
-        return 
-    
+        print("No notes yet.")
+        return
     for note in notes:
-        status_char = "x" if note["done"] else ""
-        print((f"{note['id']}. [{status_char}] {note['text']} (added {note['created']})"))
+        status_char = "x" if note["done"] else " "
+        print(f"{note['id']}. [{status_char}] {note['text']}  (added {note['created']})")
 
 
 def cmd_done(note_id):
@@ -68,68 +72,60 @@ def cmd_done(note_id):
         if note["id"] == note_id:
             note["done"] = True
             save_notes(notes)
-            print(f"Marked note {note_id} as done")
-            return 
-    
-    raise NoteNotFoundError(f"No note found with id {note_id} (run 'notes list' to see ids)")       
+            print(f"Marked note {note_id} as done.")
+            return
+    raise NoteNotFoundError(f"no note with id {note_id} (run `notes list` to see ids)")
 
 
 def cmd_rm(note_id):
-    
     notes = load_notes()
-    for i, note in enumerate(notes):
-        if note["id"] == note_id:
-            notes.pop(i)
-            save_notes(notes)
-            print(f"Removed note{note_id}")
-            return
-    
-    raise NoteNotFoundError(f"No such note found with id{note_id}")
+    filtered = [note for note in notes if note["id"] != note_id]
+    if len(filtered) == len(notes):
+        raise NoteNotFoundError(f"no note with id {note_id} (run `notes list` to see ids)")
+    save_notes(filtered)
+    print(f"Removed note {note_id}.")
+
 
 def build_parser():
-    
-    parser = argparse.ArgumentParser(prog ="notes")
-    sub = parser.add_subparsers(dest = "command")
+    parser = argparse.ArgumentParser(prog="notes", description="A tiny note manager")
+    sub = parser.add_subparsers(dest="command", required=True)
 
-    p_add = sub.add_parser("add")
-    p_add.add_argument("text")
+    p_add = sub.add_parser("add", help="add a note")
+    p_add.add_argument("text", help="the note text")
 
-    if not args.text.strip():
-        parser.error("note text cannot be empty")    # argparse exits with proper error
+    sub.add_parser("list", help="list all notes")
 
-    p_list = sub.add_parser("list") 
-
-    p_done = sub.add_parser("done")
-    p_done.add_argument("note_id", type = int)  
+    p_done = sub.add_parser("done", help="mark a note done")
+    p_done.add_argument("note_id", type=int)
 
     p_rm = sub.add_parser("rm", help="remove a note")
-    p_rm.add_argument("note_id", type = int)
+    p_rm.add_argument("note_id", type=int)
 
-    return parser           
+    return parser
+
 
 def main():
     parser = build_parser()
     args = parser.parse_args()
 
     if args.command == "add" and not args.text.strip():
-        parser.error("note text cannot be empty")   
-    
+        parser.error("note text cannot be empty")
+
     try:
-        if args.command =="add":
-            cmd_add(args.text)  
+        if args.command == "add":
+            cmd_add(args.text)
         elif args.command == "list":
             cmd_list()
         elif args.command == "done":
             cmd_done(args.note_id)
         elif args.command == "rm":
-            cmd_rm(args.note_id)    
+            cmd_rm(args.note_id)
     except NoteNotFoundError as e:
-
-        print(f"Error: {e}, file = sys.stderr")
+        print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
-if __name__ == "__main__":
-    main()  
 
+if __name__ == "__main__":
+    main()
 
 
