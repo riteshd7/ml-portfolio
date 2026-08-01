@@ -108,8 +108,8 @@ def main():
     parser = build_parser()
     args = parser.parse_args()
 
-    if args.command == "add" and not args.text.strip():
-        parser.error("note text cannot be empty")
+    #if args.command == "add" and not args.text.strip():
+    #    parser.error("note text cannot be empty")
 
     try:
         if args.command == "add":
