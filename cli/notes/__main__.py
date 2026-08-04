@@ -1,63 +1,37 @@
 """Notes CLI - a tiny command-line note manager."""
 
+
 import argparse
-import json
+import json 
 import sys
 from datetime import date
 from pathlib import Path
+#relative import of exception       
+from .exceptions import NoteNotFoundError
+#relative imports of storage 
+from .storage import load_notes, save_notes, next_id, NOTES_FILE
 
-NOTES_FILE = Path.home() / ".notes.json"
 
-
-class NoteNotFoundError(Exception):
-    """Raised when a referenced note id doesn't exist."""
 class EmptyTextError(Exception):
     """Raised when a text is empty."""  
 
-
-def load_notes():
-    """Read notes from disk. Return [] if file doesn't exist."""
-    if not NOTES_FILE.exists():
-        return []
-    try:
-        with open(NOTES_FILE, "r") as f:
-            return json.load(f)
-    except json.JSONDecodeError:
-        print(f"Error: {NOTES_FILE} contains corrupt JSON. Fix or remove it and try again.",
-              file=sys.stderr)
-        sys.exit(1)
-
-
-def save_notes(notes):
-    """Write notes to disk."""
-    with open(NOTES_FILE, "w") as f:
-        json.dump(notes, f, indent=2)
-
-
-def next_id(notes):
-    """Return max existing id + 1, or 1 if empty."""
-    if not notes:
-        return 1
-    return max(note["id"] for note in notes) + 1
-
-
 def cmd_add(text):
-    notes = load_notes()
+    notes = load_notes(NOTES_FILE)
     if not text:
             raise EmptyTextError(f"text is empty)")
     note = {
         "id": next_id(notes),
         "text": text,
         "done": False,
-        "created": str(date.today()),
+        "created": str(date.today())
     }
     notes.append(note)
-    save_notes(notes)
+    save_notes(NOTES_FILE, notes)
     print(f"Added note {note['id']}: {note['text']}")
 
 
 def cmd_list():
-    notes = load_notes()
+    notes = load_notes(NOTES_FILE)
     if not notes:
         print("No notes yet.")
         return
@@ -67,18 +41,18 @@ def cmd_list():
 
 
 def cmd_done(note_id):
-    notes = load_notes()
+    notes = load_notes(NOTES_FILE)
     for note in notes:
         if note["id"] == note_id:
             note["done"] = True
-            save_notes(notes)
+            save_notes(NOTES_FILE, notes)
             print(f"Marked note {note_id} as done.")
             return
     raise NoteNotFoundError(f"no note with id {note_id} (run `notes list` to see ids)")
 
 
 def cmd_rm(note_id):
-    notes = load_notes()
+    notes = load_notes(NOTES_FILE)
     filtered = [note for note in notes if note["id"] != note_id]
     if len(filtered) == len(notes):
         raise NoteNotFoundError(f"no note with id {note_id} (run `notes list` to see ids)")
@@ -102,14 +76,14 @@ def build_parser():
     p_rm.add_argument("note_id", type=int)
 
     return parser
-
+ 
 
 def main():
     parser = build_parser()
     args = parser.parse_args()
 
-    #if args.command == "add" and not args.text.strip():
-    #    parser.error("note text cannot be empty")
+    if args.command == "add" and not args.text.strip():
+        parser.error("note text cannot be empty")
 
     try:
         if args.command == "add":
@@ -127,5 +101,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
