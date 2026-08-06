@@ -4,11 +4,13 @@ import sys
 from .commands import cmd_add, cmd_done, cmd_list, cmd_rm
 from .exceptions import NoteNotFoundError, EmptyTextError
 from .storage import NOTES_FILE
+from pathlib import Path
 
 def build_parser():
     parser = argparse.ArgumentParser(prog="notes", description="A tiny note manager")
+    parser.add_argument("--file" , type = Path, default= None, help = "path to notes file (default: ~/.notes.json)")
     sub = parser.add_subparsers(dest="command", required=True)
-
+    
     p_add = sub.add_parser("add", help="add a note")
     p_add.add_argument("text", help="the note text")
 
@@ -25,19 +27,20 @@ def build_parser():
 def main():
     parser = build_parser()
     args = parser.parse_args()
+    notes_file = args.file or NOTES_FILE
 
     if args.command == "add" and not args.text.strip():
         parser.error("note text cannot be empty")
 
     try:
         if args.command == "add":
-            cmd_add(NOTES_FILE, args.text)
+            cmd_add(notes_file, args.text)
         elif args.command == "list":
-            cmd_list(NOTES_FILE)
+            cmd_list(notes_file)
         elif args.command == "done":
-            cmd_done(NOTES_FILE, args.note_id)
+            cmd_done(notes_file, args.note_id)
         elif args.command == "rm":
-            cmd_rm(NOTES_FILE, args.note_id)
+            cmd_rm(notes_file, args.note_id)
     except NoteNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
