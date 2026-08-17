@@ -53,5 +53,5 @@ check_word_count("Word one.    Word\ntwo.\tWord three.", 6)
 # Test 5: Single word
 check_word_count("Supercalifragilisticexpialidocious", 1)
 
-print("All assertions passed successfully! ✅")
+print("All assertions passed successfully! ")
 print("smooth") 
