@@ -12,7 +12,7 @@ def detect_category(unit: str) -> str:
     for category_name, module in CATEGORIES.items():
         if unit in module.UNITS:
             return category_name
-
+  
     raise ValueError(f"unknown unit '{unit}'")
 
 def convert(value:float, from_unit: str, to_unit:str) -> float:
