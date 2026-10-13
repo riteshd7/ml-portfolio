@@ -13,7 +13,7 @@ def strip_comments(filepath: str) -> str:
 
         clean_lines = []    
         for line in lines:
-            clean_line = line.split('#', 1)[0] 
+            clean_line = line.split('#', 1)[0].rstrip() 
             clean_lines.append(clean_line)
 
     return '\n'.join(clean_lines) 
